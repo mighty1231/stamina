@@ -1,7 +1,9 @@
 from dfa import DFA
-from data import Data
+from data import PTA
 from config import CONFIG
 from random import choice
+import os
+
 
 def fitness(p):
 	return -1
@@ -12,8 +14,32 @@ def crossover(p, q):
 def mutation(p):
 	return p
 
+def merge(pta, prev, new_pair):
+	# mergedSet = [(1, 2, 3), (4, 5)]
+	# removal = [6, 7, 8]
+	return mergedSet, removal
 
-def main():
+
+def GA_loop_pareto(fname, output_folder):
+	pta = PTA.fromTXT(fname)
+
+	if not os.path.exists(output_folder):
+		os.makedirs(output_folder)
+
+	# enumerate all nodes, by BFS
+	nodes = []
+	bfsq = [pta]
+	while bfsq:
+		node = bfsq.pop(0)
+		nodes.append(node)
+
+		for c in node.dict:
+			bfsq.append(node.dict[c])
+
+
+
+
+
 	population = [DFA() for i in range(CONFIG['GA_population_size'])]
 
 	for gen in range(CONFIG['GA_generation_cnt']):
@@ -34,4 +60,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	GA_loop_pareto('../grid/1_training.txt', '1_training')
