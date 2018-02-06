@@ -33,6 +33,7 @@ class Data:
 
 class PTA:
 	# prefix
+	# transition : PTA.DICT = dictionary transition_int->to_pta
 	def __init__(self, isPositive = None):
 		self.dict = dict()
 		self.acceptance = isPositive
@@ -192,6 +193,10 @@ class PTA:
 
 		return string
 
+class Individual:
+	def __init__(self, basis = []):
+		# self.merge_basis = [(state1, state2), (state1', state2'), (state4, state5)]
+		self.merge_basis = basis
 
 
 if __name__ == "__main__":
