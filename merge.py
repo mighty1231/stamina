@@ -81,8 +81,13 @@ class PTADisjointSet:
 					r2 = self.find(newv2)
 
 					bfsq.append((r1.value, r2.value))
+				elif newv1 != -1:
+					self.trans[v2][i] = newv1
+				elif newv2 != -1:
+					self.trans[v1][i] = newv2
 
 		# clean up unions
+
 		# Should I have to use the method with union and cleanup?
 		unionlist = ds.get()
 		topmostnodes = []
@@ -109,12 +114,6 @@ class PTADisjointSet:
 			for node in nodes:
 				self.dst_dict[node].parent = topmostnode
 			topmostnode.rank = max_rank + max_rank_double
-
-		# clean up transition of topmost nodes
-		for node in topmostnodes:
-			for i, v in enumerate(self.trans[node.value]):
-				if v != -1:
-					self.trans[node.value][i] = self.find(v).value
 
 	# return union set
 	def get(self):
@@ -143,7 +142,49 @@ class PTADisjointSet:
 		ptads.trans = copy(self.trans)
 
 		return ptads
+
+	def generateViz(self):
+		# make graphviz code
+		p2nodes = dict() # parent to node
+		for i in self.dst_dict:
+			node = self.dst_dict[i]
+			parent = self._find_node(node).value
+
+			try:
+				p2nodes[parent].append(i)
+			except KeyError:
+				p2nodes[parent] = [i]
+		vizcode = ''
+		vizcode += repr(p2nodes) + '\n'
+		vizcode += 'digraph fsm {\n\tnode [style=filled];\n'
+		for parent in p2nodes:
+			for alphabet, to in enumerate(self.trans[parent]):
+				if to == -1:
+					continue
+				# assert self.find(to).value == to
+
+				vizcode += '\t%d -> %d [label = "%s" ];\n' % (parent, self.find(to).value, alphabet)
+
+		vizcode += '}\n'
+		return vizcode
 		
 
 if __name__ == "__main__":
-	ds = PTADisjointSet(4)
+	pta = PTA.fromTXT('test_training.txt')
+	pta_nodes = []
+	bfsq = [pta]
+	while bfsq:
+		node = bfsq.pop(0)
+		pta_nodes.append(node)
+
+		for c in node.dict:
+			bfsq.append(node.dict[c])
+
+
+	ds = PTADisjointSet(pta_nodes)
+	print(ds.generateViz())
+
+	# [3, 5], [13, 4], [13, 7]
+	# ds.union(3, 5)
+	ds.union(13, 4)
+	print(ds.generateViz())

@@ -154,23 +154,8 @@ def GA_loop_pareto(fname, output_folder):
 				logfile.write(' - merge_basis %s\n' % population[e].merge_basis)
 				# logfile.write(' - union_set %s\n' % unions_list[e])
 				# write fsm graphviz code
-				vizcode = 'digraph fsm {\n\tnode [style=filled];\n'
-				ds = ds_list[e]
-				for union in unions_list[e]:
-					rootstate = ds.find(union[0]) # representation of state
-					for i, c in enumerate(ds.trans[rootstate.value]):
-						if c != -1:
-							vizcode += '\t%d -> %d [ label = "%s" ];\n' % (rootstate.value, c, i)
 
-					
-					# for state in positiveStates:
-					# 	vizcode += '\t%d [ color="%s" ];\n' % (state, posColor)
-
-					# for state in negativeStates:
-					# 	vizcode += '\t%d [ color="%s" ];\n' % (state, negColor)
-
-				vizcode += '}\n'
-				logfile.write(vizcode)
+				logfile.write(ds_list[e].generateViz())
 				print('id %d fitness %d %d' % (e, fitnesses[e][0], fitnesses[e][1]))
 				print(' - merge_basis %s' % population[e].merge_basis)
 				# print(' - union_set %s' % unions_list[e])
@@ -198,5 +183,5 @@ def unittest_getParetoIndexes():
 
 if __name__ == "__main__":
 	# unittest_getParetoIndexes()
-	# GA_loop_pareto('../grid/1_training.txt', '1_training')
-	GA_loop_pareto('test_training.txt', 'test_training')
+	GA_loop_pareto('../grid/1_training.txt', '1_training')
+	# GA_loop_pareto('test_training.txt', 'test_training')
