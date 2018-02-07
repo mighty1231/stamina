@@ -3,6 +3,7 @@
 from data import PTA
 from disjoint_set import DisjointSet
 from copy import copy
+import os
 
 class PTADisjointSetTree:
 	def __init__(self, value):
@@ -52,6 +53,7 @@ class PTADisjointSet:
 		# make union diagram
 		xRoot = self.find(x)
 		yRoot = self.find(y)
+		print(x, y, xRoot.value, yRoot.value)
 		if xRoot == yRoot:
 			return
 
@@ -71,7 +73,16 @@ class PTADisjointSet:
 			if ds.find(v1) == ds.find(v2):
 				continue
 
+			print('\nmerging', v1, v2)
+			# if v1 in [16, 25, 26, 64, 56] or v2 in [16, 25, 26, 64, 56]:
+			print(ds.get(v1), self.trans[v1][0], self.trans[v1][1])
+			print(ds.get(v2), self.trans[v2][0], self.trans[v2][1])
+
+			assert v1 == self.find(v1).value
+			assert v2 == self.find(v2).value
 			ds.union(v1, v2)
+			# v1 = ds.find(v1).value
+			# v2 = ds.find(v2).value
 			for i in range(max_alphabet):
 				newv1 = self.trans[v1][i]
 				newv2 = self.trans[v2][i]
@@ -87,9 +98,9 @@ class PTADisjointSet:
 					self.trans[v1][i] = newv2
 
 		# clean up unions
-
 		# Should I have to use the method with union and cleanup?
 		unionlist = ds.get()
+		print(unionlist)
 		topmostnodes = []
 		for nodes in unionlist:
 			if len(nodes) == 1:
@@ -114,6 +125,42 @@ class PTADisjointSet:
 			for node in nodes:
 				self.dst_dict[node].parent = topmostnode
 			topmostnode.rank = max_rank + max_rank_double
+
+		# rearrange transitions
+		# new_unions = self.get()
+		# max_alphabet = len(self.trans[0])
+		# for union in new_unions:
+		# 	transitions = [-1 for _ in range(max_alphabet)]
+		# 	for i, node in enumerate(union):
+		# 		for self.trans[node]
+
+		for nodes in unionlist:
+			root = None
+			for node in nodes:
+				if root == None:
+					root = self.find(node)
+				else:
+					assert root == self.find(node)
+
+				for alphabet, c in enumerate(self.trans[root.value]):
+					to = self.trans[node][alphabet]
+					# if to != -1 and c != -1:
+					# 	assert self.find(self.trans[root.value][alphabet]) == self.find(to).value
+					if to != -1:
+						self.trans[root.value][alphabet] = self.find(to).value
+
+		# for i, node in enumerate(unionlist):
+		# 	topmostnode = topmostnodes[i]
+
+		# 	for alphabet, c in enumerate(self.trans[node]):
+		# 		if c != -1:
+		# 			if self.trans[topmostnode.value][alphabet] == -1:
+		# 				self.trans[topmostnode.value][alphabet] = c
+		# 			else:
+						# assert self.find(self.trans[topmostnode.value][alphabet]) == self.find(c), (self.find(self.trans[topmostnode.value][i]).value, topmostnode.value, self.find(c).value, self.trans[topmostnode.value][alphabet], node, alphabet, c, )
+
+		# self.verify()
+
 
 	# return union set
 	def get(self):
@@ -155,19 +202,39 @@ class PTADisjointSet:
 			except KeyError:
 				p2nodes[parent] = [i]
 		vizcode = ''
-		vizcode += repr(p2nodes) + '\n'
+		# vizcode += repr(p2nodes) + '\n'
 		vizcode += 'digraph fsm {\n\tnode [style=filled];\n'
+
 		for parent in p2nodes:
 			for alphabet, to in enumerate(self.trans[parent]):
 				if to == -1:
 					continue
 				# assert self.find(to).value == to
 
-				vizcode += '\t%d -> %d [label = "%s" ];\n' % (parent, self.find(to).value, alphabet)
+				vizcode += '\t"%s" -> "%s" [label = "%s" ];\n' % (
+					'_'.join(map(str, p2nodes[parent])),
+					'_'.join(map(str, p2nodes[self.find(to).value])),
+					alphabet
+				)
 
 		vizcode += '}\n'
 		return vizcode
-		
+
+	def draw(self, fname):
+		with open(fname, 'wt') as f:
+			f.write(self.generateViz())		
+		os.system('dot -Tjpg %s -O' % fname)
+
+	def verify(self):
+		for i in self.dst_dict:
+			assert i == self.dst_dict[i].value
+
+		for i in self.dst_dict:
+			root = self.find(i).value
+			for alphabet, to in enumerate(self.trans[i]):
+				if to != -1:
+					assert self.find(to) == self.find(self.trans[root][alphabet]), (i, to, alphabet, self.trans)
+
 
 if __name__ == "__main__":
 	pta = PTA.fromTXT('test_training.txt')
@@ -182,9 +249,68 @@ if __name__ == "__main__":
 
 
 	ds = PTADisjointSet(pta_nodes)
-	print(ds.generateViz())
 
-	# [3, 5], [13, 4], [13, 7]
-	# ds.union(3, 5)
-	ds.union(13, 4)
-	print(ds.generateViz())
+
+	# [[1, 45], [0, 28], [4, 6], [6, 45], [23, 56], [2, 13], [53, 10], [1, 60]]
+	# digraph fsm {
+	# 	node [style=filled];
+	# 	1 -> 1 [label = "0" ];
+	# 	1 -> 1 [label = "1" ];
+	# 	25 -> 43 [label = "0" ];
+	# 	25 -> 44 [label = "1" ];
+	# 	26 -> 1 [label = "0" ];
+	# 	26 -> 46 [label = "1" ];
+	# }
+
+	ds.draw('debugging_00.gv')
+	merging = [
+		[1, 45],
+		[0, 28],
+		[4, 6],
+		[6, 45],
+		[23, 56],
+		[2, 13],
+		[53, 10],
+		[1, 60]
+	]
+
+	'''
+	merging 3 17
+	merging 1 66
+	merging 7 27
+	merging 12 0
+	merging 3 29
+	merging 1 30
+	merging 11 47
+	merging 64 48 <- 64
+	merging 17 1
+	merging 66 2
+	merging 7 51
+	merging 12 52
+	merging 3 1
+	merging 1 54
+	merging 27 3
+	merging 0 1
+	merging 29 5
+	merging 30 1
+	merging 47 7
+	merging 48 12
+	merging 51 31
+	merging 52 32
+	merging 15 11
+	merging 16 64 <- 16
+	merging 11 55
+	merging 64 56 <- 
+	merging 17 2
+	merging 66 58
+	merging 56 15
+	merging 24 16
+	merging 25 39
+	merging 26 40
+	merging 41 25
+	merging 42 26
+	'''
+	for i, (s, t) in enumerate(merging):
+		ds.union(s, t)
+		ds.verify()
+		ds.draw('debugging_%02d.gv' % (i+1))

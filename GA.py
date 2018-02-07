@@ -91,7 +91,8 @@ def GA_loop_pareto(fname, output_folder):
 	population = []
 	for i in range(CONFIG['GA_population_size']):
 		basis = []
-		for t in range(random.randint(int(node_len/3), int(node_len*2/3))):
+		# for t in range(random.randint(int(node_len/3), int(node_len*2/3))):
+		for t in range(20):
 			basis.append(random.sample(range(node_len), 2))
 		population.append(Individual(basis))
 
@@ -154,8 +155,19 @@ def GA_loop_pareto(fname, output_folder):
 				logfile.write(' - merge_basis %s\n' % population[e].merge_basis)
 				# logfile.write(' - union_set %s\n' % unions_list[e])
 				# write fsm graphviz code
+				vizcode = ds_list[e].generateViz()
 
-				logfile.write(ds_list[e].generateViz())
+				# run graphviz
+				fname = os.path.join(output_folder, 'gen_%03d_id_%d' % (gen, e))
+				dotfname = fname + '.gv'
+				with open(dotfname, 'wt') as dotfile:
+					dotfile.write(vizcode)
+
+				cmdline = 'dot -Tjpg %s -O' % (dotfname)
+				print(cmdline)
+				os.system(cmdline)
+
+				logfile.write(vizcode)
 				print('id %d fitness %d %d' % (e, fitnesses[e][0], fitnesses[e][1]))
 				print(' - merge_basis %s' % population[e].merge_basis)
 				# print(' - union_set %s' % unions_list[e])
@@ -183,5 +195,5 @@ def unittest_getParetoIndexes():
 
 if __name__ == "__main__":
 	# unittest_getParetoIndexes()
-	GA_loop_pareto('../grid/1_training.txt', '1_training')
-	# GA_loop_pareto('test_training.txt', 'test_training')
+	# GA_loop_pareto('../grid/1_training.txt', '1_training_20')
+	GA_loop_pareto('test_training.txt', 'test_training')

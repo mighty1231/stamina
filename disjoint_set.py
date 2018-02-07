@@ -40,7 +40,7 @@ class DisjointSet:
 		return value in self.dict
 
 	# return union set
-	def get(self):
+	def get(self, x = None):
 		p2nodes = dict() # parent to nodes
 		for i in self.dict:
 			node = self.dict[i]
@@ -54,7 +54,8 @@ class DisjointSet:
 				p2nodes[parent].append(i)
 			except KeyError:
 				p2nodes[parent] = [i]
-		return p2nodes.values()
+
+		return p2nodes.values() if x == None else p2nodes[self.find(x).value]
 
 	def _find_node(self, node):
 		if node.parent != node:
